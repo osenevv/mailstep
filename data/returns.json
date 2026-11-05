@@ -1,0 +1,52 @@
+[
+  {
+    "id": "R-0241",
+    "orderId": "MS-2026-000241",
+    "state": "Připraveno"
+  },
+  {
+    "id": "R-0242",
+    "orderId": "MS-2026-000242",
+    "state": "přijato na sklad"
+  },
+  {
+    "id": "R-0281",
+    "orderId": "MS-2026-000281",
+    "state": "Připraveno"
+  },
+  {
+    "id": "R-1001",
+    "orderId": "MS-2026-008000",
+    "state": "přijato na sklad"
+  },
+  {
+    "id": "R-1002",
+    "orderId": "MS-2026-008001",
+    "state": "přijato na sklad"
+  },
+  {
+    "id": "R-1003",
+    "orderId": "MS-2026-008002",
+    "state": "přijato na sklad"
+  },
+  {
+    "id": "R-1004",
+    "orderId": "MS-2026-008003",
+    "state": "přijato na sklad"
+  },
+  {
+    "id": "R-1005",
+    "orderId": "MS-2026-008004",
+    "state": "přijato na sklad"
+  },
+  {
+    "id": "R-1006",
+    "orderId": "MS-2026-008005",
+    "state": "přijato na sklad"
+  },
+  {
+    "id": "R-1007",
+    "orderId": "MS-2026-008006",
+    "state": "přijato na sklad"
+  }
+]

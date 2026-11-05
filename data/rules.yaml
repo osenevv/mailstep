@@ -1,0 +1,16 @@
+# Definice A je nevyzvednutí, definice B je ztráta. Seznamy patří jen své definici.
+definitions:
+  A:
+    orderState: čeká na dopravce
+    minDays: 2
+    excludedMethods:
+      - interní přeprava
+    complaintReason: nevyzvednuto dopravcem
+  B:
+    orderState: převzato dopravcem
+    minDays: 14
+    excludedMethods:
+      - interní přeprava
+      - Rychlopost Ekonom bez sledování
+      - PaketNet Obyčejný balík
+    complaintReason: ztráta

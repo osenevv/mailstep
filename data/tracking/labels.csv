@@ -1,0 +1,65 @@
+file,carrier,label
+NP4001.html,NordParcel,nevím
+NP4002.html,NordParcel,nevím
+NP4003.html,NordParcel,nevím
+NPWIN14.html,NordParcel,v přepravě
+PN2001.html,PaketNet,nevím
+PN2002.html,PaketNet,nevím
+PN233.html,PaketNet,v přepravě
+RP1001.html,Rychlopost,v přepravě
+RP1002.html,Rychlopost,doručeno
+RP1003.html,Rychlopost,vrací se
+RP1004.html,Rychlopost,nevím
+RP1005.html,Rychlopost,v přepravě
+RP1006.html,Rychlopost,v přepravě
+RP251.html,Rychlopost,v přepravě
+RPA221.html,Rychlopost,nevím
+RPWIN2.html,Rychlopost,v přepravě
+RPWIN3.html,Rychlopost,doručeno
+RPWIN4.html,Rychlopost,nevím
+VC253.html,VeloCorriere,v přepravě
+VC3001.html,VeloCorriere,doručeno
+VC3002.html,VeloCorriere,vrací se
+VC3003.html,VeloCorriere,v přepravě
+VCWIN15.html,VeloCorriere,v přepravě
+XNP01.html,NordParcel,vrací se
+XNP02.html,NordParcel,doručeno
+XNP03.html,NordParcel,doručeno
+XNP04.html,NordParcel,vrací se
+XNP05.html,NordParcel,vrací se
+XNP06.html,NordParcel,v přepravě
+XNP07.html,NordParcel,v přepravě
+XNP08.html,NordParcel,nevím
+XNP09.html,NordParcel,v přepravě
+XNP10.html,NordParcel,doručeno
+XNP11.html,NordParcel,vrací se
+XNP12.html,NordParcel,nevím
+XPN01.html,PaketNet,doručeno
+XPN02.html,PaketNet,doručeno
+XPN03.html,PaketNet,doručeno
+XPN04.html,PaketNet,vrací se
+XPN05.html,PaketNet,vrací se
+XPN06.html,PaketNet,v přepravě
+XPN07.html,PaketNet,v přepravě
+XPN08.html,PaketNet,nevím
+XPN09.html,PaketNet,nevím
+XPN10.html,PaketNet,nevím
+XPN11.html,PaketNet,v přepravě
+XPN12.html,PaketNet,doručeno
+XPN13.html,PaketNet,vrací se
+XRP01.html,Rychlopost,v přepravě
+XRP02.html,Rychlopost,doručeno
+XRP03.html,Rychlopost,doručeno
+XRP04.html,Rychlopost,vrací se
+XRP05.html,Rychlopost,v přepravě
+XVC01.html,VeloCorriere,v přepravě
+XVC02.html,VeloCorriere,doručeno
+XVC03.html,VeloCorriere,doručeno
+XVC04.html,VeloCorriere,vrací se
+XVC05.html,VeloCorriere,vrací se
+XVC06.html,VeloCorriere,v přepravě
+XVC07.html,VeloCorriere,nevím
+XVC08.html,VeloCorriere,v přepravě
+XVC09.html,VeloCorriere,doručeno
+XVC10.html,VeloCorriere,vrací se
+XVC11.html,VeloCorriere,nevím
