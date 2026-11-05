@@ -1,0 +1,6 @@
+node_modules/
+out/
+/plan.md
+/brief.md
+*.pdf
+.DS_Store

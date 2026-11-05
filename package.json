@@ -1,0 +1,26 @@
+{
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test",
+    "decide": "tsx src/cli.ts decide",
+    "measure": "tsx src/cli.ts measure",
+    "start": "npm run check && tsx src/cli.ts all"
+  },
+  "dependencies": {
+    "csv-parse": "^5.6.0",
+    "node-html-parser": "^7.0.1",
+    "yaml": "^2.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.3"
+  }
+}
