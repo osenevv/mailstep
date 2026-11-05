@@ -72,10 +72,13 @@ function measureCommand(dir: string, check: boolean): boolean {
     process.exit(2);
   }
   const splitFile = path.join(dir, 'tracking', 'split.md');
-  const splits = existsSync(splitFile) ? readSplits(splitFile) : new Map<string, Split>();
-  const pages = pack.trackingLabels.map((label, index) => {
+  const splits = existsSync(splitFile) ? readSplits(splitFile) : null;
+  if (!splits) {
+    console.error('tracking/split.md chybí: všechny stránky jdou do Dev, Holdout zůstane prázdný.');
+  }
+  const pages = pack.trackingLabels.map((label) => {
     const html = readFileSync(path.join(dir, 'tracking', label.file), 'utf8');
-    const split = splits.get(label.file) ?? (index % 2 === 0 ? 'dev' : 'holdout');
+    const split = splits?.get(label.file) ?? 'dev';
     return {
       file: label.file,
       carrier: label.carrier,

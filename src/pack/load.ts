@@ -41,11 +41,8 @@ export function loadPack(dir: string): Pack {
 
 function readOrders(file: string): OrdersExport {
   const value = readJson(file);
-  if (Array.isArray(value)) {
-    return { exportedAt: new Date().toISOString(), orders: value as Order[] };
-  }
   if (!isRecord(value) || !Array.isArray(value.orders) || typeof value.exportedAt !== 'string') {
-    fail('orders.json', null, 'exportedAt', 'string and orders array (or bare orders array)');
+    fail('orders.json', null, 'exportedAt', 'object with exportedAt string and orders array');
   }
   return value as unknown as OrdersExport;
 }

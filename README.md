@@ -100,7 +100,7 @@ Na pravidlech není. Na stránkách také ne: čtyři šablony se čtou kódem. 
 | `npm run measure -- --data dir` | přepíše `docs/mereni.md` |
 | `npm run measure -- --check` | skončí chybou, když by se zpráva změnila |
 | `npm run demo` | otevře interaktivní ukázku rozhodování v prohlížeči |
-| `npm test` | testy bez disku Mailshipu a bez sítě |
+| `npm test` | testy bez sítě; zlatý test a loader čtou místní `data/` |
 
 Neznámý přepínač skončí kódem 64. Rozbitý soubor kódem 2.
 
