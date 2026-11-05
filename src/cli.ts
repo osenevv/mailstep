@@ -9,6 +9,7 @@ import { renderReport } from './measurement/render.ts';
 import type { Split } from './measurement/types.ts';
 import { loadPack } from './pack/load.ts';
 import type { Order } from './pack/types.ts';
+import { reconcileShadow } from './shadow/reconcile.ts';
 import { readTracking } from './tracking/read.ts';
 import type { TrackingReading } from './tracking/types.ts';
 
@@ -20,14 +21,15 @@ const PROVENANCE = [
 ].join('\n');
 
 const usage = `Usage:
-  tsx src/cli.ts decide  [--data dir] [--as-of iso]
-  tsx src/cli.ts measure [--data dir] [--check]
-  tsx src/cli.ts all     [--data dir] [--as-of iso]`;
+  tsx src/cli.ts decide    [--data dir] [--as-of iso] [--json]
+  tsx src/cli.ts measure   [--data dir] [--check]
+  tsx src/cli.ts reconcile [--data dir] [--as-of iso]
+  tsx src/cli.ts all       [--data dir] [--as-of iso]`;
 
 function main(): void {
   const parsed = parseArgs(process.argv.slice(2));
   if (parsed.command === 'decide') {
-    decideCommand(parsed.data, parsed.asOf);
+    decideCommand(parsed.data, parsed.asOf, parsed.json);
     return;
   }
   if (parsed.command === 'measure') {
@@ -35,11 +37,15 @@ function main(): void {
     if (parsed.check && changed) process.exit(1);
     return;
   }
-  decideCommand(parsed.data, parsed.asOf);
+  if (parsed.command === 'reconcile') {
+    reconcileCommand(parsed.data, parsed.asOf);
+    return;
+  }
+  decideCommand(parsed.data, parsed.asOf, false);
   measureCommand(parsed.data, false);
 }
 
-function decideCommand(dir: string, asOfFlag: string | null): void {
+function decideCommand(dir: string, asOfFlag: string | null, jsonOutput: boolean): void {
   const pack = loadOrExit(dir);
   const asOf = asOfFlag ? parseTimestamp(asOfFlag) : pack.exportedAt;
   if (!asOf) {
@@ -60,9 +66,51 @@ function decideCommand(dir: string, asOfFlag: string | null): void {
   });
   mkdirSync('out', { recursive: true });
   writeFileSync('out/decisions.json', `${JSON.stringify(rows, null, 2)}\n`);
+  if (jsonOutput) {
+    console.log(JSON.stringify(rows, null, 2));
+    return;
+  }
   printTable(rows);
   const counts = countActions(rows);
   console.log(`FILE ${counts.FILE}  NEEDS_HUMAN ${counts.NEEDS_HUMAN}  DO_NOT_FILE ${counts.DO_NOT_FILE}`);
+}
+
+function reconcileCommand(dir: string, asOfFlag: string | null): void {
+  const pack = loadOrExit(dir);
+  const asOf = asOfFlag ? parseTimestamp(asOfFlag) : pack.exportedAt;
+  if (!asOf) {
+    console.error(`--as-of: expected ISO-8601 timestamp`);
+    process.exit(2);
+  }
+  const decisions = pack.orders.map((order) => {
+    const rules = decide(order, {
+      asOf,
+      rules: pack.rules,
+      complaints: pack.complaints,
+      returns: pack.returns,
+      reporters: pack.reporters,
+    });
+    const tracking = rules.kind === 'eligible' ? readingFor(pack.trackingHtml, order) : null;
+    const finalDecision = gate(rules, tracking);
+    return { order, decision: finalDecision };
+  });
+
+  const result = reconcileShadow(decisions, pack.complaints);
+  console.log('=== VÝSLEDEK POROVNÁNÍ SE STÍNOVÝM PROVOZEM (SHADOW RECONCILIATION) ===');
+  console.log(`Celkem objednávek:                      ${result.total}`);
+  console.log(`Shoda: Založili oba (Both Filed):       ${result.bothFiled}`);
+  console.log(`Shoda: Nezakládat (Neither Filed):      ${result.neitherFiled}`);
+  console.log(`Pouze automat (Automation Only):        ${result.automationOnly}`);
+  console.log(`Pouze člověk (Human Only):              ${result.humanOnly}`);
+  console.log(`Přesnost automatizace (Precision):      ${result.precision} %`);
+  console.log(`Pokrytí (Recall):                       ${result.recall} %`);
+  console.log(`Kritické falešné reklamace:             ${result.dangerousFalseClaims}`);
+  if (result.flaggedOrders.length > 0) {
+    console.log('\nPodrobný přehled odchylek:');
+    for (const f of result.flaggedOrders) {
+      console.log(`  ${f.orderId.padEnd(16)} [${f.issue}] auto: ${f.automationAction} (${f.automationCode}), clovek: ${f.humanFiled ? 'zalozeno' : 'nezalozeno'}`);
+    }
+  }
 }
 
 function measureCommand(dir: string, check: boolean): boolean {
@@ -181,21 +229,23 @@ function percent(agree: number, pages: number): string {
 
 
 interface Args {
-  command: 'decide' | 'measure' | 'all';
+  command: 'decide' | 'measure' | 'reconcile' | 'all';
   data: string;
   asOf: string | null;
   check: boolean;
+  json: boolean;
 }
 
 function parseArgs(argv: string[]): Args {
   const command = argv[0];
-  if (command !== 'decide' && command !== 'measure' && command !== 'all') {
+  if (command !== 'decide' && command !== 'measure' && command !== 'reconcile' && command !== 'all') {
     console.error(usage);
     process.exit(64);
   }
   let data = 'data';
   let asOf: string | null = null;
   let check = false;
+  let json = false;
   for (let i = 1; i < argv.length; i += 1) {
     const token = argv[i];
     if (token === '--data') {
@@ -206,12 +256,14 @@ function parseArgs(argv: string[]): Args {
       i += 1;
     } else if (token === '--check') {
       check = true;
+    } else if (token === '--json') {
+      json = true;
     } else {
       console.error(usage);
       process.exit(64);
     }
   }
-  return { command, data, asOf, check };
+  return { command, data, asOf, check, json };
 }
 
 function requireValue(argv: string[], index: number): string {

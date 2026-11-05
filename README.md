@@ -89,16 +89,25 @@ flowchart LR
 
 ## Jazykový model
 
-Na pravidlech není. Na stránkách také ne: čtyři šablony se čtou kódem. Cena jednoho vyhodnocení je 0 Kč. Model by přišel až ve chvíli, kdy podíl neznámé šablony na holdoutu překročí práh domluvený s vývojem. Do té doby je `nevím` levnější než odhad. Podrobně [docs/navrh.md](docs/navrh.md).
+Na pravidlech model není: podmínky jsou pevné a mechanické. Na sledovaných dopravcích také ne: čtyři šablony se čtou deterministickým kódem s cenou **0 Kč** a nulovou latencí.
+
+Pokud v produkci podíl neznámých šablon překročí stanovený práh (např. 10 %), nastupuje LLM fallback pro nestrukturované stránky (`src/tracking/llm.ts`):
+- **Doporučený model:** Google Gemini 1.5 Flash nebo Anthropic Claude 3.5 Haiku.
+- **Cena za jedno vyhodnocení:**
+  - Gemini 1.5 Flash: **0.0076 Kč** (~$0.00032 / stránka)
+  - Claude 3.5 Haiku: **0.0278 Kč** (~$0.00118 / stránka)
+- **Bezpečnostní prompt:** Pokud je jistota modelu < 85 % nebo text obsahuje neúspěšné doručení ("nedoručeno"), výstup se povinně mapuje na `v přepravě` nebo `nevím`. Nikdy nevytváří falešné doručení.
 
 ## Příkazy a přepínače
 
 | Příkaz | Co udělá |
 |---|---|
 | `npm start` | typy, testy, rozhodnutí, měření |
-| `npm run decide -- --data dir --as-of iso` | jen rozhodnutí |
+| `npm run decide -- --data dir --as-of iso` | rozhodnutí v textové tabulce |
+| `npm run decide -- --json` | výstup rozhodnutí v JSON (pro piping do API/jq) |
 | `npm run measure -- --data dir` | přepíše `docs/mereni.md` |
 | `npm run measure -- --check` | skončí chybou, když by se zpráva změnila |
+| `npm run reconcile` | porovná doporučení automatu proti stávajícím reklamacím ve stínovém režimu |
 | `npm run demo` | otevře interaktivní ukázku rozhodování v prohlížeči |
 | `npm test` | testy bez sítě; zlatý test a loader čtou místní `data/` |
 
