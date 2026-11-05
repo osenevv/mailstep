@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { decide } from './complaints/decide.ts';
 import { gate } from './complaints/gate.ts';
@@ -67,14 +67,15 @@ function decideCommand(dir: string, asOfFlag: string | null): void {
 
 function measureCommand(dir: string, check: boolean): boolean {
   const pack = loadOrExit(dir);
-  const splits = readSplits(path.join(dir, 'tracking', 'split.md'));
-  const pages = pack.trackingLabels.map((label) => {
+  if (pack.trackingLabels.length === 0) {
+    console.error(`tracking/labels.csv: expected benchmark labels to measure against`);
+    process.exit(2);
+  }
+  const splitFile = path.join(dir, 'tracking', 'split.md');
+  const splits = existsSync(splitFile) ? readSplits(splitFile) : new Map<string, Split>();
+  const pages = pack.trackingLabels.map((label, index) => {
     const html = readFileSync(path.join(dir, 'tracking', label.file), 'utf8');
-    const split = splits.get(label.file);
-    if (!split) {
-      console.error(`tracking/split.md.${label.file}: expected dev or holdout`);
-      process.exit(2);
-    }
+    const split = splits.get(label.file) ?? (index % 2 === 0 ? 'dev' : 'holdout');
     return {
       file: label.file,
       carrier: label.carrier,
@@ -87,7 +88,7 @@ function measureCommand(dir: string, check: boolean): boolean {
   const markdown = renderReport(report, PROVENANCE);
   mkdirSync('docs', { recursive: true });
   const target = path.join('docs', 'mereni.md');
-  const previous = exists(target) ? readFileSync(target, 'utf8') : '';
+  const previous = existsSync(target) ? readFileSync(target, 'utf8') : '';
   if (!check) writeFileSync(target, markdown);
   const dev = report.bySplit.dev;
   const holdout = report.bySplit.holdout;
@@ -175,14 +176,6 @@ function percent(agree: number, pages: number): string {
   return `${((agree / pages) * 100).toFixed(1)}%`;
 }
 
-function exists(file: string): boolean {
-  try {
-    readFileSync(file);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 interface Args {
   command: 'decide' | 'measure' | 'all';

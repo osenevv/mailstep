@@ -52,4 +52,11 @@ describe('I-window', () => {
     const cet = parseTimestamp('2026-10-25T02:30:00+01:00');
     expect(parsed?.toISOString()).toBe(cet?.toISOString());
   });
+
+  it('I-window: parses microsecond timestamps and space-separated ISO strings', () => {
+    const micro = parseTimestamp('2026-11-01T06:00:00.123456Z');
+    expect(micro).not.toBeNull();
+    const spaced = parseTimestamp('2026-11-01 06:00:00+01:00');
+    expect(spaced).not.toBeNull();
+  });
 });

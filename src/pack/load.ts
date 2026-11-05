@@ -22,6 +22,7 @@ export function loadPack(dir: string): Pack {
   const exportedAt = parseTimestamp(ordersExport.exportedAt);
   if (!exportedAt) fail('orders.json', null, 'exportedAt', 'ISO-8601 timestamp');
   const orders = ordersExport.orders.map((order, index) => checkOrder(order, index));
+  const labelsFile = path.join(dir, 'tracking', 'labels.csv');
   return {
     exportedAt,
     orders,
@@ -29,7 +30,7 @@ export function loadPack(dir: string): Pack {
     returns: readReturns(path.join(dir, 'returns.json')),
     reporters: readReporters(path.join(dir, 'reporters.csv')),
     rules: readRules(path.join(dir, 'rules.yaml')),
-    trackingLabels: readLabels(dir),
+    trackingLabels: existsSync(labelsFile) ? readLabels(dir) : [],
     trackingHtml(trackingNumber: string) {
       const file = path.join(dir, 'tracking', `${trackingNumber}.html`);
       if (!existsSync(file)) return null;
@@ -40,8 +41,11 @@ export function loadPack(dir: string): Pack {
 
 function readOrders(file: string): OrdersExport {
   const value = readJson(file);
+  if (Array.isArray(value)) {
+    return { exportedAt: new Date().toISOString(), orders: value as Order[] };
+  }
   if (!isRecord(value) || !Array.isArray(value.orders) || typeof value.exportedAt !== 'string') {
-    fail('orders.json', null, 'exportedAt', 'string and orders array');
+    fail('orders.json', null, 'exportedAt', 'string and orders array (or bare orders array)');
   }
   return value as unknown as OrdersExport;
 }

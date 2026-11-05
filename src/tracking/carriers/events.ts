@@ -41,10 +41,12 @@ function fromRows(slug: CarrierSlug, rows: EventRow[], rulePrefix: string): Trac
 }
 
 export function rowsFrom(items: HTMLElement[], whenSel: string, whatSel: string): EventRow[] {
-  return items.map((item) => ({
-    when: item.querySelector(whenSel)?.text.trim() ?? '',
-    what: item.querySelector(whatSel)?.text.trim() ?? '',
-  }));
+  return items
+    .map((item) => ({
+      when: item.querySelector(whenSel)?.text.trim() ?? '',
+      what: item.querySelector(whatSel)?.text.trim() ?? '',
+    }))
+    .filter((row) => row.when !== '' || row.what !== '');
 }
 
 function ruleSuffix(status: 'doručeno' | 'v přepravě' | 'vrací se'): string {

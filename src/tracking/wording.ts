@@ -28,7 +28,8 @@ const TRANSIT = [
 ];
 
 export function mapWording(text: string): TrackingStatus | null {
-  const value = text.toLocaleLowerCase('cs');
+  // Normalize whitespace (including &nbsp; \u00a0 and multi-spaces)
+  const value = text.replace(/\s+/gu, ' ').trim().toLocaleLowerCase('cs');
   if (containsAny(value, RETURN)) return 'vrací se';
   if (containsAny(value, FAILED)) return 'v přepravě';
   if (containsAny(value, DEPOT)) return 'v přepravě';
@@ -42,6 +43,9 @@ function containsAny(text: string, phrases: string[]): boolean {
 }
 
 function hasPhrase(text: string, phrase: string): boolean {
-  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`, 'iu').test(text);
+  const pattern = phrase
+    .split(/\s+/)
+    .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('\\s+');
+  return new RegExp(`(?<![\\p{L}\\p{N}_])${pattern}(?![\\p{L}\\p{N}_])`, 'iu').test(text);
 }

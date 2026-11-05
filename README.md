@@ -30,6 +30,8 @@ pages 64  dev 94.3%  holdout 93.1%  dangerous 0  suppressing 0  abstention 4
 
 Podrobná zpráva je [docs/mereni.md](docs/mereni.md). Tam je shoda holdoutu `93.1 %` a dev `94.3 %`.
 
+Jak job rozhoduje na konkrétní objednávce, je v [docs/ukazka.html](docs/ukazka.html). Otevře se v prohlížeči, bez serveru.
+
 ## Co kde najdu
 
 | Zadání chce | Soubor |
@@ -37,6 +39,7 @@ Podrobná zpráva je [docs/mereni.md](docs/mereni.md). Tam je shoda holdoutu `93
 | Návrh, nejvýš dvě strany | [docs/navrh.md](docs/navrh.md) |
 | Kód, testy, jeden příkaz | `src/`, `npm start` |
 | Měření nad stránkami | [docs/mereni.md](docs/mereni.md) |
+| Ukázka jednoho rozhodnutí | [docs/ukazka.html](docs/ukazka.html) |
 | Otázky na oddělení a na vývoj | [docs/otazky.md](docs/otazky.md) |
 | Co je vynechané | [docs/vynechano.md](docs/vynechano.md) |
 | Výklad nejasností | tahle stránka, další oddíl |
@@ -96,6 +99,7 @@ Na pravidlech není. Na stránkách také ne: čtyři šablony se čtou kódem. 
 | `npm run decide -- --data dir --as-of iso` | jen rozhodnutí |
 | `npm run measure -- --data dir` | přepíše `docs/mereni.md` |
 | `npm run measure -- --check` | skončí chybou, když by se zpráva změnila |
+| `npm run demo` | otevře interaktivní ukázku rozhodování v prohlížeči |
 | `npm test` | testy bez disku Mailshipu a bez sítě |
 
 Neznámý přepínač skončí kódem 64. Rozbitý soubor kódem 2.

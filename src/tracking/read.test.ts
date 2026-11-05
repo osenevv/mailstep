@@ -135,4 +135,45 @@ describe('readTracking', () => {
     expect(reading.status).toBe('nevím');
     if (reading.status === 'nevím') expect(reading.cause).toBe('conflicting_events');
   });
+
+  it('handles non-breaking spaces &nbsp; and extra whitespace in tracking wording', () => {
+    const html = page(
+      'rychlopost',
+      `<table class="rp-events"><tbody>
+        <tr><td class="when">03.11.2026 08:00</td><td class="what">V&nbsp;přepravě</td></tr>
+      </tbody></table>`,
+    );
+    expect(readTracking(html).status).toBe('v přepravě');
+
+    const htmlMulti = page(
+      'rychlopost',
+      `<table class="rp-events"><tbody>
+        <tr><td class="when">03.11.2026 08:00</td><td class="what">V   přepravě</td></tr>
+      </tbody></table>`,
+    );
+    expect(readTracking(htmlMulti).status).toBe('v přepravě');
+  });
+
+  it('detects carrier from DOM elements or title when data-carrier is missing', () => {
+    const realHtml = `<!doctype html><html><head><title>Sledování zásilky - Rychlopost</title></head><body>
+      <table class="rp-events"><tbody>
+        <tr><td class="when">03.11.2026 08:00</td><td class="what">V přepravě</td></tr>
+      </tbody></table>
+    </body></html>`;
+    const reading = readTracking(realHtml);
+    expect(reading.carrier).toBe('Rychlopost');
+    expect(reading.status).toBe('v přepravě');
+  });
+
+  it('ignores empty table rows in event lists without crashing', () => {
+    const html = page(
+      'rychlopost',
+      `<table class="rp-events"><tbody>
+        <tr><th>Datum</th><th>Stav</th></tr>
+        <tr><td class="when">03.11.2026 08:00</td><td class="what">Doručeno příjemci</td></tr>
+        <tr></tr>
+      </tbody></table>`,
+    );
+    expect(readTracking(html).status).toBe('doručeno');
+  });
 });

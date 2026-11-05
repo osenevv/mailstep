@@ -10,6 +10,7 @@
     "check": "npm run typecheck && npm test",
     "decide": "tsx src/cli.ts decide",
     "measure": "tsx src/cli.ts measure",
+    "demo": "open docs/ukazka.html || xdg-open docs/ukazka.html",
     "start": "npm run check && tsx src/cli.ts all"
   },
   "dependencies": {
