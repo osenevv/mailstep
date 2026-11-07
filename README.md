@@ -21,16 +21,15 @@ Node 22 (`nvm use`), pak:
 npm ci && npm start
 ```
 
-`npm start` pustí kontrolu typů, testy, tabulku rozhodnutí a měření. Na tomto stroji doběhne za pár sekund. Konec tabulky a měření vypadá takto:
+`npm start` zkontroluje typy, spustí testy, tabulku rozhodnutí a měření. Běží pod sekundu. Konec výstupu:
 
 ```
 FILE 12  NEEDS_HUMAN 7  DO_NOT_FILE 26
 pages 64  dev 94.3%  holdout 93.1%  dangerous 0  suppressing 0  abstention 4
 ```
 
-Podrobná zpráva je [docs/mereni.md](docs/mereni.md). Tam je shoda holdoutu `93.1 %` a dev `94.3 %`.
-
-Jak job rozhoduje na konkrétní objednávce, je v [docs/ukazka.html](docs/ukazka.html). Otevře se v prohlížeči, bez serveru.
+Podrobná zpráva je v [docs/mereni.md](docs/mereni.md) (shoda holdout 93.1 %, dev 94.3 %).
+Rozhodnutí pro konkrétní objednávku zobrazí [docs/ukazka.html](docs/ukazka.html) přímo v prohlížeči.
 
 ## Co kde najdu
 
@@ -89,14 +88,14 @@ flowchart LR
 
 ## Jazykový model
 
-Na pravidlech model není: podmínky jsou pevné a mechanické. Na sledovaných dopravcích také ne: čtyři šablony se čtou deterministickým kódem s cenou **0 Kč** a nulovou latencí.
+Na pravidlech model není: podmínky jsou mechanické. U známých dopravců také ne: čtyři šablony čte deterministický parser za **0 Kč** bez latence.
 
-Pokud v produkci podíl neznámých šablon překročí stanovený práh (např. 10 %), nastupuje LLM fallback pro nestrukturované stránky (`src/tracking/llm.ts`):
-- **Doporučený model:** Google Gemini 1.5 Flash nebo Anthropic Claude 3.5 Haiku.
-- **Cena za jedno vyhodnocení:**
-  - Gemini 1.5 Flash: **0.0076 Kč** (~$0.00032 / stránka)
-  - Claude 3.5 Haiku: **0.0278 Kč** (~$0.00118 / stránka)
-- **Bezpečnostní prompt:** Pokud je jistota modelu < 85 % nebo text obsahuje neúspěšné doručení ("nedoručeno"), výstup se povinně mapuje na `v přepravě` nebo `nevím`. Nikdy nevytváří falešné doručení.
+Když podíl neznámých šablon překročí 10 %, nastupuje LLM fallback (`src/tracking/llm.ts`):
+- **Model:** Google Gemini 1.5 Flash nebo Anthropic Claude 3.5 Haiku.
+- **Cena za vyhodnocení:**
+  - Gemini 1.5 Flash: **0,0076 Kč** (~$0,00032 / stránka)
+  - Claude 3.5 Haiku: **0,0278 Kč** (~$0,00118 / stránka)
+- **Bezpečnostní pravidlo:** Jistota < 85 % nebo text „nedoručeno“ se povinně mapuje na `v přepravě` nebo `nevím`. Nikdy nevytvoří falešné doručení.
 
 ## Příkazy a přepínače
 
@@ -107,8 +106,8 @@ Pokud v produkci podíl neznámých šablon překročí stanovený práh (např.
 | `npm run decide -- --json` | výstup rozhodnutí v JSON (pro piping do API/jq) |
 | `npm run measure -- --data dir` | přepíše `docs/mereni.md` |
 | `npm run measure -- --check` | skončí chybou, když by se zpráva změnila |
-| `npm run reconcile` | porovná doporučení automatu proti stávajícím reklamacím ve stínovém režimu |
-| `npm run demo` | otevře interaktivní ukázku rozhodování v prohlížeči |
+| `npm run reconcile` | porovná rozhodnutí automatu s reklamacemi ze souboru |
+| `npm run demo` | otevře ukázku rozhodování v prohlížeči |
 | `npm test` | testy bez sítě; zlatý test a loader čtou místní `data/` |
 
 Neznámý přepínač skončí kódem 64. Rozbitý soubor kódem 2.
