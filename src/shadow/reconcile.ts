@@ -25,10 +25,18 @@ export function reconcileShadow(
   decisions: Array<{ order: Order; decision: FinalDecision }>,
   actualComplaints: Complaint[],
 ): ReconcileResult {
+  const uniqueDecisions = new Map<string, { order: Order; decision: FinalDecision }>();
+  for (const item of decisions) {
+    const key = item.order.id.trim();
+    if (!uniqueDecisions.has(key)) {
+      uniqueDecisions.set(key, item);
+    }
+  }
+
   const filedOrderIds = new Set(
     actualComplaints
       .filter((c) => c.state !== 'koncept' && c.state !== 'zamítnutá')
-      .map((c) => c.orderId),
+      .map((c) => c.orderId.trim()),
   );
 
   let bothFiled = 0;
@@ -39,9 +47,9 @@ export function reconcileShadow(
 
   const flaggedOrders: ReconcileResult['flaggedOrders'] = [];
 
-  for (const { order, decision } of decisions) {
+  for (const { order, decision } of uniqueDecisions.values()) {
     const autoFiled = decision.action === 'FILE';
-    const humanFiled = filedOrderIds.has(order.id);
+    const humanFiled = filedOrderIds.has(order.id.trim());
     const trackingStatus = decision.tracking?.status ?? null;
 
     if (autoFiled && humanFiled) {
@@ -76,7 +84,7 @@ export function reconcileShadow(
     }
   }
 
-  const total = decisions.length;
+  const total = uniqueDecisions.size;
   const precision = bothFiled + automationOnly > 0 ? (bothFiled / (bothFiled + automationOnly)) * 100 : 100;
   const recall = bothFiled + humanOnly > 0 ? (bothFiled / (bothFiled + humanOnly)) * 100 : 100;
 

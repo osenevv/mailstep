@@ -10,6 +10,12 @@ export interface EventRow {
 
 export function readNewestFirst(slug: CarrierSlug, rows: EventRow[]): TrackingReading {
   if (rows.length === 0) return unknown('no_carrier_events', slug, 'no-events', null);
+  const withTimestamps = rows.map((row) => ({ row, time: parseEventTimestamp(row.when) }));
+  const maxTime = Math.max(...withTimestamps.map((item) => item.time));
+  if (maxTime > 0) {
+    const latestRows = withTimestamps.filter((item) => item.time === maxTime).map((item) => item.row);
+    return fromRows(slug, latestRows, 'latest-event');
+  }
   const newestWhen = rows[0]?.when ?? '';
   const sameTime = rows.filter((row) => row.when === newestWhen);
   return fromRows(slug, sameTime, 'latest-event');
@@ -17,9 +23,35 @@ export function readNewestFirst(slug: CarrierSlug, rows: EventRow[]): TrackingRe
 
 export function readOldestFirst(slug: CarrierSlug, rows: EventRow[]): TrackingReading {
   if (rows.length === 0) return unknown('no_carrier_events', slug, 'no-events', null);
+  const withTimestamps = rows.map((row) => ({ row, time: parseEventTimestamp(row.when) }));
+  const maxTime = Math.max(...withTimestamps.map((item) => item.time));
+  if (maxTime > 0) {
+    const latestRows = withTimestamps.filter((item) => item.time === maxTime).map((item) => item.row);
+    return fromRows(slug, latestRows, 'latest-event');
+  }
   const newestWhen = rows[rows.length - 1]?.when ?? '';
   const sameTime = rows.filter((row) => row.when === newestWhen);
   return fromRows(slug, sameTime, 'latest-event');
+}
+
+function parseEventTimestamp(when: string): number {
+  if (!when) return -1;
+  // DD.MM.YYYY HH:mm or DD.MM.YYYY
+  const dotMatch = /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/.exec(when.trim());
+  if (dotMatch) {
+    const [, d, m, y, h = '0', min = '0'] = dotMatch;
+    return new Date(Number(y), Number(m) - 1, Number(d), Number(h), Number(min)).getTime();
+  }
+  // DD/MM/YYYY HH:mm or DD/MM/YYYY
+  const slashMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/.exec(when.trim());
+  if (slashMatch) {
+    const [, d, m, y, h = '0', min = '0'] = slashMatch;
+    return new Date(Number(y), Number(m) - 1, Number(d), Number(h), Number(min)).getTime();
+  }
+  // YYYY-MM-DD HH:mm or ISO
+  const isoTime = new Date(when.trim()).getTime();
+  if (!Number.isNaN(isoTime)) return isoTime;
+  return -1;
 }
 
 function fromRows(slug: CarrierSlug, rows: EventRow[], rulePrefix: string): TrackingReading {

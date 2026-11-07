@@ -52,16 +52,34 @@ function decideCommand(dir: string, asOfFlag: string | null, jsonOutput: boolean
     console.error(`--as-of: expected ISO-8601 timestamp`);
     process.exit(2);
   }
+  const inFlightFiled = new Set<string>();
   const rows = pack.orders.map((order) => {
+    const normId = order.id.trim();
+    const effectiveComplaints = inFlightFiled.has(normId)
+      ? [
+          ...pack.complaints,
+          {
+            id: `in-flight-${normId}`,
+            orderId: normId,
+            clientId: order.clientId,
+            state: 'koncept' as const,
+            reporter: 'automat',
+            createdAt: asOf.toISOString(),
+          },
+        ]
+      : pack.complaints;
     const rules = decide(order, {
       asOf,
       rules: pack.rules,
-      complaints: pack.complaints,
+      complaints: effectiveComplaints,
       returns: pack.returns,
       reporters: pack.reporters,
     });
     const tracking = rules.kind === 'eligible' ? readingFor(pack.trackingHtml, order) : null;
     const finalDecision = gate(rules, tracking);
+    if (finalDecision.action === 'FILE') {
+      inFlightFiled.add(normId);
+    }
     return toRow(order, finalDecision);
   });
   mkdirSync('out', { recursive: true });
@@ -82,16 +100,34 @@ function reconcileCommand(dir: string, asOfFlag: string | null): void {
     console.error(`--as-of: expected ISO-8601 timestamp`);
     process.exit(2);
   }
+  const inFlightFiled = new Set<string>();
   const decisions = pack.orders.map((order) => {
+    const normId = order.id.trim();
+    const effectiveComplaints = inFlightFiled.has(normId)
+      ? [
+          ...pack.complaints,
+          {
+            id: `in-flight-${normId}`,
+            orderId: normId,
+            clientId: order.clientId,
+            state: 'koncept' as const,
+            reporter: 'automat',
+            createdAt: asOf.toISOString(),
+          },
+        ]
+      : pack.complaints;
     const rules = decide(order, {
       asOf,
       rules: pack.rules,
-      complaints: pack.complaints,
+      complaints: effectiveComplaints,
       returns: pack.returns,
       reporters: pack.reporters,
     });
     const tracking = rules.kind === 'eligible' ? readingFor(pack.trackingHtml, order) : null;
     const finalDecision = gate(rules, tracking);
+    if (finalDecision.action === 'FILE') {
+      inFlightFiled.add(normId);
+    }
     return { order, decision: finalDecision };
   });
 

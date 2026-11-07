@@ -42,6 +42,7 @@ Jak job rozhoduje na konkrétní objednávce, je v [docs/ukazka.html](docs/ukazk
 | Ukázka jednoho rozhodnutí | [docs/ukazka.html](docs/ukazka.html) |
 | Otázky na oddělení a na vývoj | [docs/otazky.md](docs/otazky.md) |
 | Co je vynechané | [docs/vynechano.md](docs/vynechano.md) |
+| Specifikace stavových automatů a analýza rizik | [docs/state-machines.md](docs/state-machines.md) |
 | Výklad nejasností | tahle stránka, další oddíl |
 | Jak vznikl syntetický balíček | [data/README.md](data/README.md) |
 

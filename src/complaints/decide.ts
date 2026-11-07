@@ -41,7 +41,11 @@ export function decide(order: Order, ctx: DecideContext): RulesDecision {
   }
 
   const blocks: BlockCode[] = [];
-  if (rule.excludedMethods.includes(order.shippingMethod)) blocks.push('EXCLUDED_SHIPPING_METHOD');
+  const normalizedMethod = (order.shippingMethod ?? '').trim().toLowerCase();
+  const isExcluded = rule.excludedMethods.some(
+    (method) => method.trim().toLowerCase() === normalizedMethod,
+  );
+  if (isExcluded) blocks.push('EXCLUDED_SHIPPING_METHOD');
   if (complaintBlocks(order.id, ctx.complaints)) blocks.push('COMPLAINT_EXISTS');
   if (returnBlocks(order.id, ctx.returns)) blocks.push('RETURN_EXISTS');
   const reporter = resolveReporter(order.clientId, order.carrier, ctx.reporters, ctx.complaints);
@@ -67,11 +71,30 @@ export function decide(order: Order, ctx: DecideContext): RulesDecision {
 }
 
 function incompleteDetail(order: Order): string | null {
-  const missingClient = order.clientId.trim() === '';
+  const missingId = !order.id || order.id.trim() === '';
+  const missingClient = !order.clientId || order.clientId.trim() === '';
+  const missingCarrier = !order.carrier || order.carrier.trim() === '';
   const missingTime = order.stateEnteredAt === null || order.stateEnteredAt.trim() === '';
-  if (missingClient && missingTime) return 'Chybí klient a čas vstupu do stavu.';
-  if (missingClient) return 'Chybí klient.';
-  if (missingTime) return 'Chybí čas vstupu do stavu.';
+
+  if (missingClient && missingTime && !missingId && !missingCarrier) {
+    return 'Chybí klient a čas vstupu do stavu.';
+  }
+  if (missingClient && !missingTime && !missingId && !missingCarrier) {
+    return 'Chybí klient.';
+  }
+  if (missingTime && !missingClient && !missingId && !missingCarrier) {
+    return 'Chybí čas vstupu do stavu.';
+  }
+
+  const missing: string[] = [];
+  if (missingId) missing.push('identifikátor');
+  if (missingClient) missing.push('klient');
+  if (missingCarrier) missing.push('dopravce');
+  if (missingTime) missing.push('čas vstupu do stavu');
+
+  if (missing.length > 0) {
+    return `Chybí ${missing.join(', ')}.`;
+  }
   return null;
 }
 
