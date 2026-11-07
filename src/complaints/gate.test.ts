@@ -87,3 +87,51 @@ it('a blocked order does not file', () => {
     tracking: null,
   });
 });
+
+it('invariant: delivered or returning tracking status NEVER files a complaint', () => {
+  const safeStatuses: Array<'doručeno' | 'vrací se'> = ['doručeno', 'vrací se'];
+  for (const st of safeStatuses) {
+    for (const d of [eligibleA, eligibleB]) {
+      const res = gate(d, reading(st));
+      expect(res.action).toBe('DO_NOT_FILE');
+      expect(['TRACKING_DELIVERED', 'TRACKING_RETURNING']).toContain(res.code);
+    }
+  }
+});
+
+it('invariant: not_candidate rules decisions never file or escalate to human', () => {
+  const notCandidateCodes = ['DATA_INCOMPLETE', 'NOT_WATCHED_STATE', 'WINDOW_NOT_REACHED'] as const;
+  for (const c of notCandidateCodes) {
+    const rulesDec: RulesDecision = {
+      kind: 'not_candidate',
+      orderId: 'NC-1',
+      code: c,
+      detail: 'test',
+    };
+    for (const st of ['doručeno', 'v přepravě', 'vrací se'] as const) {
+      const res = gate(rulesDec, reading(st));
+      expect(res.action).toBe('DO_NOT_FILE');
+      expect(res.code).toBe(c);
+      expect(res.tracking).toBeNull();
+    }
+    const resNull = gate(rulesDec, null);
+    expect(resNull.action).toBe('DO_NOT_FILE');
+    expect(resNull.code).toBe(c);
+  }
+});
+
+it('invariant: unknown causes on definition B always result in NEEDS_HUMAN (never FILE)', () => {
+  const allCauses: Array<'no_carrier_events' | 'empty' | 'error_page' | 'unrecognized_template' | 'conflicting_events' | 'unknown_carrier'> = [
+    'no_carrier_events',
+    'empty',
+    'error_page',
+    'unrecognized_template',
+    'conflicting_events',
+    'unknown_carrier',
+  ];
+  for (const cause of allCauses) {
+    const res = gate(eligibleB, unknown(cause));
+    expect(res.action).toBe('NEEDS_HUMAN');
+    expect(res.code).toBe('TRACKING_UNKNOWN');
+  }
+});

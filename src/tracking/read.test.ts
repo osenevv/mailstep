@@ -176,4 +176,95 @@ describe('readTracking', () => {
     );
     expect(readTracking(html).status).toBe('doručeno');
   });
+
+  it('handles HTML and script injection without leaking fake delivery status', () => {
+    const injectedHtml = page(
+      'rychlopost',
+      `<script>const fake = "Doručeno příjemci";</script>
+       <style>.status:after { content: "Doručeno příjemci"; }</style>
+       <!-- Doručeno příjemci v komentáři -->
+       <div title="Doručeno příjemci"></div>
+       <table class="rp-events"><tbody>
+         <tr><td class="when">03.11.2026 08:00</td><td class="what">V přepravě</td></tr>
+       </tbody></table>`,
+    );
+    const reading = readTracking(injectedHtml);
+    expect(reading.status).toBe('v přepravě');
+    expect(reading.status).not.toBe('doručeno');
+  });
+
+  it('handles uppercase and international phrase variations safely', () => {
+    // Uppercase Czech
+    const upperCzech = page(
+      'rychlopost',
+      `<table class="rp-events"><tbody><tr><td class="when">03.11.2026 08:00</td><td class="what">DORUČENO PŘÍJEMCI</td></tr></tbody></table>`,
+    );
+    expect(readTracking(upperCzech).status).toBe('doručeno');
+
+    // Italian depot delivery vs failed delivery
+    const itDepot = page(
+      'velocorriere',
+      `<ul class="vc-events"><li><span class="when">03/11/2026 08:00</span><span class="what">Consegnato al deposito</span></li></ul>`,
+    );
+    expect(readTracking(itDepot).status).toBe('v přepravě');
+
+    const itFailed = page(
+      'velocorriere',
+      `<ul class="vc-events"><li><span class="when">03/11/2026 08:00</span><span class="what">NON CONSEGNATO</span></li></ul>`,
+    );
+    expect(readTracking(itFailed).status).toBe('v přepravě');
+
+    // English depot delivery
+    const enDepot = page(
+      'nordparcel',
+      `<p class="np-badge">Delivered to depot</p><ul class="np-history"><li><span class="when">2026-11-03 08:00</span><span class="what">Delivered to depot</span></li></ul>`,
+    );
+    expect(readTracking(enDepot).status).toBe('v přepravě');
+  });
+
+  it('normalizes carrier slug casing and surrounding whitespace in data-carrier', () => {
+    const spaced = `<html><body><div data-carrier="  Rychlopost  ">
+      <table class="rp-events"><tbody><tr><td class="when">03.11.2026 08:00</td><td class="what">V přepravě</td></tr></tbody></table>
+    </div></body></html>`;
+    const readingSpaced = readTracking(spaced);
+    expect(readingSpaced.carrier).toBe('Rychlopost');
+    expect(readingSpaced.status).toBe('v přepravě');
+
+    const upper = `<html><body><div data-carrier="PAKETNET">
+      <ol class="pn-timeline"><li><time>2026-11-03 08:00</time><span class="what">V přepravě</span></li></ol>
+    </div></body></html>`;
+    const readingUpper = readTracking(upper);
+    expect(readingUpper.carrier).toBe('PaketNet');
+    expect(readingUpper.status).toBe('v přepravě');
+  });
+
+  it('detects NordParcel badge conflict when badge says in transit and history says delivered', () => {
+    const conflict = page(
+      'nordparcel',
+      `<p class="np-badge">In transit</p><ul class="np-history"><li><span class="when">2026-11-03 08:00</span><span class="what">Delivered</span></li></ul>`,
+    );
+    const reading = readTracking(conflict);
+    expect(reading.status).toBe('nevím');
+    if (reading.status === 'nevím') {
+      expect(reading.cause).toBe('conflicting_events');
+    }
+  });
+
+  it('efficiently handles large stress HTML payloads with hundreds of elements', () => {
+    let rows = '';
+    for (let i = 0; i < 500; i++) {
+      rows += `<tr><td class="when">01.11.2026 08:00</td><td class="what">V přepravě na depu ${i}</td></tr>\n`;
+    }
+    // Newest row on top
+    const largeHtml = page(
+      'rychlopost',
+      `<table class="rp-events"><tbody>
+        <tr><td class="when">03.11.2026 09:00</td><td class="what">Doručeno příjemci</td></tr>
+        ${rows}
+      </tbody></table>`,
+    );
+    const reading = readTracking(largeHtml);
+    expect(reading.status).toBe('doručeno');
+    expect(reading.carrier).toBe('Rychlopost');
+  });
 });

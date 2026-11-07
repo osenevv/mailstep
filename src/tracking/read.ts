@@ -53,5 +53,6 @@ function detectCarrier(root: HTMLElement): CarrierSlug | null {
 
 function slugOf(value: string | null | undefined): CarrierSlug | null {
   if (!value) return null;
-  return value in CARRIER_NAME ? (value as CarrierSlug) : null;
+  const normalized = value.trim().toLowerCase();
+  return normalized in CARRIER_NAME ? (normalized as CarrierSlug) : null;
 }

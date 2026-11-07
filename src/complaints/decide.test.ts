@@ -243,4 +243,98 @@ describe('decide', () => {
     expect(early.kind).toBe('eligible');
     expect(code(beforeWindow)).toBe('WINDOW_NOT_REACHED');
   });
+
+  it('reports all 4 blocks simultaneously in strict order when all fail', () => {
+    // 1. Excluded method
+    // 2. Complaint exists
+    // 3. Return exists
+    // 4. No reporter (CL-MISA has no matrix entry and complaints list has no reporter for it)
+    const o = order({
+      id: 'MS-EXTREME-BLOCKS',
+      clientId: 'CL-MISA',
+      shippingMethod: 'interní přeprava',
+    });
+    const decision = decide(
+      o,
+      ctx({
+        complaints: [complaint({ orderId: 'MS-EXTREME-BLOCKS', clientId: 'CL-MISA', reporter: null })],
+        returns: [wmsReturn({ orderId: 'MS-EXTREME-BLOCKS' })],
+        reporters: [], // large client check false, small client history has no reporter
+      }),
+    );
+    expect(decision.kind).toBe('blocked');
+    if (decision.kind === 'blocked') {
+      expect(decision.blocks).toEqual([
+        'EXCLUDED_SHIPPING_METHOD',
+        'COMPLAINT_EXISTS',
+        'RETURN_EXISTS',
+        'NO_REPORTER',
+      ]);
+      expect(decision.detail).toContain('vyloučený');
+      expect(decision.detail).toContain('existuje reklamace');
+      expect(decision.detail).toContain('vratka');
+      expect(decision.detail).toContain('Nelze určit reportéra');
+    }
+  });
+
+  it('rejects future timestamp as WINDOW_NOT_REACHED with negative elapsed time', () => {
+    const futureOrder = order({
+      stateEnteredAt: '2026-11-10T06:00:00+01:00', // 7 days in the future relative to asOf
+      clientId: 'CL-LUMEN',
+    });
+    const decision = decide(futureOrder, ctx({ asOf, reporters: [reporter()] }));
+    expect(decision.kind).toBe('not_candidate');
+    if (decision.kind === 'not_candidate') {
+      expect(decision.code).toBe('WINDOW_NOT_REACHED');
+      expect(decision.detail).toContain('−');
+    }
+  });
+
+  it('handles whitespace-only clientId and stateEnteredAt as DATA_INCOMPLETE', () => {
+    const blankClient = decide(order({ clientId: '   ' }), ctx());
+    expect(blankClient.kind).toBe('not_candidate');
+    if (blankClient.kind === 'not_candidate') {
+      expect(blankClient.code).toBe('DATA_INCOMPLETE');
+      expect(blankClient.detail).toBe('Chybí klient.');
+    }
+
+    const blankTime = decide(order({ stateEnteredAt: '   ', clientId: 'CL-LUMEN' }), ctx());
+    expect(blankTime.kind).toBe('not_candidate');
+    if (blankTime.kind === 'not_candidate') {
+      expect(blankTime.code).toBe('DATA_INCOMPLETE');
+      expect(blankTime.detail).toBe('Chybí čas vstupu do stavu.');
+    }
+
+    const bothBlank = decide(order({ clientId: '  ', stateEnteredAt: '  ' }), ctx());
+    expect(bothBlank.kind).toBe('not_candidate');
+    if (bothBlank.kind === 'not_candidate') {
+      expect(bothBlank.code).toBe('DATA_INCOMPLETE');
+      expect(bothBlank.detail).toBe('Chybí klient a čas vstupu do stavu.');
+    }
+  });
+
+  it('rejects completely unknown order states as NOT_WATCHED_STATE', () => {
+    for (const st of ['storno', 'reklamováno', 'archivováno', 'neznámý stav', '123']) {
+      const decision = decide(order({ state: st as any, clientId: 'CL-LUMEN' }), ctx());
+      expect(code(decision)).toBe('NOT_WATCHED_STATE');
+    }
+  });
+
+  it('tie-breaks identical millisecond complaint timestamps deterministically by complaint ID', () => {
+    const sameTime = '2026-10-01T12:00:00.000Z';
+    const decision = decide(
+      order({ id: 'MS-TIE-TEST', clientId: 'CL-SMALL' }),
+      ctx({
+        complaints: [
+          complaint({ id: 'C-001', clientId: 'CL-SMALL', reporter: 'Alice', createdAt: sameTime }),
+          complaint({ id: 'C-002', clientId: 'CL-SMALL', reporter: 'Bob', createdAt: sameTime }),
+        ],
+      }),
+    );
+    expect(decision.kind).toBe('eligible');
+    if (decision.kind === 'eligible') {
+      // C-002 localeCompare C-001 is positive, b.id.localeCompare(a.id) picks C-002
+      expect(decision.reporter).toBe('Bob');
+    }
+  });
 });
