@@ -18,7 +18,7 @@ Balíček vznikl jednorázovým skriptem, který zapsal pevné šablony čtyř d
 | `tracking/labels.csv` | `file,carrier,label` |
 | `tracking/split.md` | dev a holdout |
 
-`exportedAt` je `2026-11-03T06:00:00+01:00`. 45 objednávek, 25 reklamací, 10 vratek, 8 řádků matice, 64 stránek.
+`exportedAt` je `2026-11-03T06:00:00+01:00`. 45 objednávek, 25 reklamací, 10 vratek, 8 řádků matice, 64 stránek (dev 35 / holdout 29 podle `tracking/split.md`).
 
 ## Klienti
 

@@ -1,7 +1,9 @@
 /**
- * LLM Fallback Specification & Cost Model for Untemplated Tracking Pages
- * Answers Case Study Part 2 requirement:
- * "Pokud použijete jazykový model, uveďte který a kolik stojí jedno vyhodnocení."
+ * LLM fallback cost model for untemplated tracking pages.
+ * Answers the brief: which model, and how much one evaluation costs.
+ * Not wired into readTracking — deterministic parsers stay on the hot path.
+ *
+ * Rates: provider list prices as of 2026-11-07 (USD per 1M tokens).
  */
 
 export interface ModelPricing {
@@ -9,29 +11,30 @@ export interface ModelPricing {
   provider: string;
   inputPerMillionUsd: number;
   outputPerMillionUsd: number;
-  czkRate: number; // e.g. 23.50 CZK/USD
+  czkRate: number;
 }
 
-export const MODELS: Record<'haiku' | 'flash' | 'gpt4o_mini', ModelPricing> = {
+/** Cheap classification tiers — prompts here are well under 100k tokens. */
+export const MODELS: Record<'flash' | 'haiku' | 'nano', ModelPricing> = {
   flash: {
-    name: 'Gemini 1.5 Flash',
-    provider: 'Google Cloud',
-    inputPerMillionUsd: 0.075,
-    outputPerMillionUsd: 0.30,
+    name: 'Gemini 3.5 Flash-Lite',
+    provider: 'Google',
+    inputPerMillionUsd: 0.3,
+    outputPerMillionUsd: 2.5,
     czkRate: 23.5,
   },
   haiku: {
-    name: 'Claude 3.5 Haiku',
+    name: 'Claude Haiku 5.5',
     provider: 'Anthropic',
-    inputPerMillionUsd: 0.80,
-    outputPerMillionUsd: 4.00,
+    inputPerMillionUsd: 0.1,
+    outputPerMillionUsd: 0.5,
     czkRate: 23.5,
   },
-  gpt4o_mini: {
-    name: 'GPT-4o Mini',
+  nano: {
+    name: 'GPT-5 nano',
     provider: 'OpenAI',
-    inputPerMillionUsd: 0.15,
-    outputPerMillionUsd: 0.60,
+    inputPerMillionUsd: 0.05,
+    outputPerMillionUsd: 0.4,
     czkRate: 23.5,
   },
 };
@@ -66,7 +69,7 @@ export function extractTextForLlm(html: string): string {
  */
 export function estimateEvaluationCost(
   cleanTextLength: number,
-  modelKey: keyof typeof MODELS = 'flash',
+  modelKey: keyof typeof MODELS = 'haiku',
 ): CostEstimate {
   const model = MODELS[modelKey];
   // 1 token ≈ 4 characters in multilingual text
@@ -103,7 +106,7 @@ Tvým úkolem je určit stav zásilky z textu stránky dopravce:
 
 Bezpečnostní pravidlo (Cena chyby):
 Pokud text obsahuje "nedoručeno" nebo "neúspěšný pokus", klasifikuj jako "v přepravě", NIKOLIV "doručeno".
-Pokud si nejsi 100% jistý, odpověz "nevím". Falešné "v přepravě" způsobí neoprávněnou reklamaci ztráty.
+Pokud je confidence < 0.85, odpověz "nevím". Falešné "v přepravě" u ztráty založí neoprávněnou reklamaci.
 
 Vrať JSON:
 {

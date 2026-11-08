@@ -12,7 +12,7 @@ Pravidla drží všechno, co je v souborech: stav, okno, vyloučenou dopravu, ex
 
 Jediný nestrukturovaný vstup je HTML dopravce. Stránky mají čtyři šablony, takže je čte deterministický čtenář, jedna šablona na dopravce. Stojí 0 Kč na stránku, běží offline a na stejné HTML vrátí stejný výsledek. Když šablonu nepozná, řekne `nevím`. Brána z toho udělá práci pro člověka, ne reklamaci.
 
-Model by měl místo až u dlouhého chvostu dopravců bez šablony. Spouštěč: podíl `nevím` s příčinou `unrecognized_template` přes dohodnutý práh, měřený na holdoutu. Model by klasifikoval jen do čtyř stavů, nízká jistota by zůstala `nevím`. Cena jednoho vyhodnocení by šla do README v den, kdy se zapne. Dnes zapnutý není.
+Model by měl místo až u dlouhého chvostu dopravců bez šablony. Spouštěč: podíl `nevím` s příčinou `unrecognized_template` přes dohodnutý práh (v README zatím 10 %), měřený na holdoutu. Model by klasifikoval jen do čtyř stavů, nízká jistota by zůstala `nevím`. Odhad ceny je v README a `src/tracking/llm.ts`; na hot path se model nevolá.
 
 Na 64 syntetických stránkách je shoda holdoutu 93.1 %, dev 94.3 %. Nebezpečných čtení je 0, potlačujících 0, zdrženlivých 4. Všechna čtyři jsou šablona v2 u Rychlopostu: člověk stav přečte, čtečka se zdrží.
 
@@ -36,7 +36,7 @@ Když stránka není k dispozici, reklamace se nezaloží. Chybějící stránka
 
 ## Nasazení bez škody
 
-První týdny běží stín. Lidé zakládají dál. Job jen vypíše, co by založil, a proč by nezaložil. Úspěch znamená přesnost řádků `FILE` proti rozhodnutí člověka, nula stínových `FILE` u zásilky, kterou člověk našel jako doručenou, a udržený podíl `NEEDS_HUMAN`. Do Mailshipu se nezapisuje.
+První týdny běží stín. Lidé zakládají dál. Job jen vypíše, co by založil, a proč by nezaložil. V řezu to umí `npm run reconcile` proti souboru reklamací; naostro by proti sobě šly akce člověka z daného dne. Úspěch znamená přesnost řádků `FILE` proti rozhodnutí člověka, nula stínových `FILE` u zásilky, kterou člověk našel jako doručenou, a udržený podíl `NEEDS_HUMAN`. Do Mailshipu se nezapisuje.
 
 Naostro se přepne až po týdnu, ve kterém ta nula platí a přesnost `FILE` je domluvená s reklamačním oddělením. Vypínač je jeden příznak jobu. Špatné „doručeno“ objednávku nevyřadí navždy, protože se nic neukládá.
 

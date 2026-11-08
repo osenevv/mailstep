@@ -15,7 +15,7 @@ import type { TrackingReading } from './tracking/types.ts';
 
 const PROVENANCE = [
   'Balíček je syntetický. Skutečné podklady k zadání nebyly dodány.',
-  'Stránky i čtečka vznikly podle jedné šablony na dopravce. Holdout je druhá půlka souborů. Pravidla se na něj nedolaďovala, ale není to zkouška na cizích stránkách dopravců.',
+  'Stránky i čtečka vznikly podle jedné šablony na dopravce. Split je ve tracking/split.md (dev 35, holdout 29), stratifikovaný po štítku. Pravidla se na holdout nedolaďovala; není to zkouška na cizích stránkách dopravců.',
   'Šablona v2 je v obou půlkách schválně neznámá: čtečka řekne nevím a reklamace se nezaloží.',
   'Příkaz: npm start',
 ].join('\n');
@@ -132,19 +132,22 @@ function reconcileCommand(dir: string, asOfFlag: string | null): void {
   });
 
   const result = reconcileShadow(decisions, pack.complaints);
-  console.log('=== VÝSLEDEK POROVNÁNÍ SE STÍNOVÝM PROVOZEM (SHADOW RECONCILIATION) ===');
-  console.log(`Celkem objednávek:                      ${result.total}`);
-  console.log(`Shoda: Založili oba (Both Filed):       ${result.bothFiled}`);
-  console.log(`Shoda: Nezakládat (Neither Filed):      ${result.neitherFiled}`);
-  console.log(`Pouze automat (Automation Only):        ${result.automationOnly}`);
-  console.log(`Pouze člověk (Human Only):              ${result.humanOnly}`);
-  console.log(`Přesnost automatizace (Precision):      ${result.precision} %`);
-  console.log(`Pokrytí (Recall):                       ${result.recall} %`);
-  console.log(`Kritické falešné reklamace:             ${result.dangerousFalseClaims}`);
+  console.log('=== Reconcile: automat vs. complaints.json ===');
+  console.log('(Nejsou to označená lidská rozhodnutí ze stínu — jen existující reklamace v balíčku.)');
+  console.log(`Objednávek:                             ${result.total}`);
+  console.log(`Oba založili:                           ${result.bothFiled}`);
+  console.log(`Ani jeden:                              ${result.neitherFiled}`);
+  console.log(`Jen automat (FILE, v souboru není):     ${result.automationOnly}`);
+  console.log(`Jen soubor (automat by nezaložil):      ${result.humanOnly}`);
+  console.log(`Precision FILE ∩ soubor / FILE:         ${result.precision} %`);
+  console.log(`Recall FILE ∩ soubor / soubor:          ${result.recall} %`);
+  console.log(`FILE při trackingu doručeno/vrací se:   ${result.dangerousFalseClaims}`);
   if (result.flaggedOrders.length > 0) {
-    console.log('\nPodrobný přehled odchylek:');
+    console.log('\nOdchylky:');
     for (const f of result.flaggedOrders) {
-      console.log(`  ${f.orderId.padEnd(16)} [${f.issue}] auto: ${f.automationAction} (${f.automationCode}), clovek: ${f.humanFiled ? 'zalozeno' : 'nezalozeno'}`);
+      console.log(
+        `  ${f.orderId.padEnd(16)} [${f.issue}] auto: ${f.automationAction} (${f.automationCode}), v souboru: ${f.humanFiled ? 'ano' : 'ne'}`,
+      );
     }
   }
 }

@@ -3,7 +3,7 @@
 ## Původ
 
 Balíček je syntetický. Skutečné podklady k zadání nebyly dodány.
-Stránky i čtečka vznikly podle jedné šablony na dopravce. Holdout je druhá půlka souborů. Pravidla se na něj nedolaďovala, ale není to zkouška na cizích stránkách dopravců.
+Stránky i čtečka vznikly podle jedné šablony na dopravce. Split je ve tracking/split.md (dev 35, holdout 29), stratifikovaný po štítku. Pravidla se na holdout nedolaďovala; není to zkouška na cizích stránkách dopravců.
 Šablona v2 je v obou půlkách schválně neznámá: čtečka řekne nevím a reklamace se nezaloží.
 Příkaz: npm start
 

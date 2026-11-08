@@ -6,9 +6,10 @@ Zadání je řez, ne celý reklamační proces. V kódu není:
 - posouzení oprávněnosti, hlášení dopravci, lhůty a e-mail klientovi (další řez: až po založení, pořád u člověka)
 - živý retrack a zápis do Mailshipu (další řez: stejná brána, jiné adaptéry místo souborů)
 - persistence a plánovač (další řez: ranní job bez vlastní databáze rozhodnutí)
-- jazykový model pro dopravce bez šablony (další řez: až podíl `unrecognized_template` překročí práh z návrhu)
+- zapnutý jazykový model na hot path (spec a ceník jsou v `src/tracking/llm.ts` + README; volá se až po překročení prahu `unrecognized_template`)
+- deník lidských rozhodnutí pro ostrý stín ( `npm run reconcile` dnes srovnává jen s `complaints.json` )
 
-Balíček je syntetický a stránky i čtečka znají stejné čtyři šablony. Holdout proto neměří cizí dopravce. Až přijdou skutečné podklady, spustí se `npm run decide -- --data <adresář>` a `npm run measure -- --data <adresář>`. Názvy polí, která loader nezná, se upraví v `src/pack/load.ts`.
+Balíček je syntetický a stránky i čtečka znají stejné čtyři šablony. Holdout (29 z 64) proto neměří cizí dopravce. Až přijdou skutečné podklady, spustí se `npm run decide -- --data <adresář>` a `npm run measure -- --data <adresář>`. Názvy polí, která loader nezná, se upraví v `src/pack/load.ts`.
 
 Neznámé znění události se hlásí jako `unrecognized_template`, protože výčet příčin `nevím` jinou přihrádku nemá. Až půjde výčet rozšířit, dostane vlastní příčinu a brána se nezmění: pořád to bude `nevím`, a u ztráty pořád člověk.
 

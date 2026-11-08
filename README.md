@@ -1,6 +1,6 @@
 # Reklamace uvízlých zásilek
 
-Řez rozhodne, jestli se k objednávce založí reklamace, a když ne, proč. Kandidáta udělá zastaralý stav v Mailshipu. Pravdu o doručení dá až čerstvá stránka dopravce. Jazykový model v tomhle řezu není: podmínky jsou pevné a stránky mají šablonu. Jedno vyhodnocení stránky stojí 0 Kč.
+Řez rozhodne, jestli se k objednávce založí reklamace, a když ne, proč. Kandidáta udělá zastaralý stav v Mailshipu. Pravdu o doručení dá až čerstvá stránka dopravce. Na hot path jazykový model není: podmínky jsou pevné a známé stránky čte parser (0 Kč). Spec a odhad ceny fallbacku jsou v README níže a v `src/tracking/llm.ts`.
 
 ## Upozornění k podkladům
 
@@ -21,7 +21,7 @@ Node 22 (`nvm use`), pak:
 npm ci && npm start
 ```
 
-`npm start` zkontroluje typy, spustí testy, tabulku rozhodnutí a měření. Běží pod sekundu. Konec výstupu:
+`npm start` zkontroluje typy, spustí testy, tabulku rozhodnutí a měření. Na tomto stroji doběhne za pár sekund. Konec výstupu:
 
 ```
 FILE 12  NEEDS_HUMAN 7  DO_NOT_FILE 26
@@ -61,7 +61,9 @@ flowchart LR
 | `src/complaints/decide.ts` | kandidát, nebo proč ne | ano |
 | `src/complaints/gate.ts` | stránka pustí, nebo zastaví | ano |
 | `src/tracking/read.ts` | HTML na čtyři stavy | ano |
+| `src/tracking/llm.ts` | ceník fallbacku (nevolá API) | ano |
 | `src/measurement/measure.ts` | koše chyb | ano |
+| `src/shadow/reconcile.ts` | stín vs. existující reklamace | ano |
 | `src/pack/load.ts` | soubory a kontrola tvaru | ne, čte disk |
 | `src/cli.ts` | jeden příkaz | ne, čte a píše disk |
 
@@ -90,12 +92,10 @@ flowchart LR
 
 Na pravidlech model není: podmínky jsou mechanické. U známých dopravců také ne: čtyři šablony čte deterministický parser za **0 Kč** bez latence.
 
-Když podíl neznámých šablon překročí 10 %, nastupuje LLM fallback (`src/tracking/llm.ts`):
-- **Model:** Google Gemini 1.5 Flash nebo Anthropic Claude 3.5 Haiku.
-- **Cena za vyhodnocení:**
-  - Gemini 1.5 Flash: **0,0076 Kč** (~$0,00032 / stránka)
-  - Claude 3.5 Haiku: **0,0278 Kč** (~$0,00118 / stránka)
-- **Bezpečnostní pravidlo:** Jistota < 85 % nebo text „nedoručeno“ se povinně mapuje na `v přepravě` nebo `nevím`. Nikdy nevytvoří falešné doručení.
+Když podíl neznámých šablon překročí 10 %, nastupuje LLM fallback (`src/tracking/llm.ts`). Model se v `npm start` nevolá. Ceny níže jsou **výpočet**, ne změřený účet: ~1200 znaků vyčištěného textu → `znaky/4` tokenů + 250 systém + 45 odpověď × list price (2026-11-07) × 23,5 Kč/USD.
+- **Výchozí:** Anthropic Claude Haiku 5.5 — **0,0018 Kč** / stránka (~$0,00008)
+- **Alternativy:** Google Gemini 3.5 Flash-Lite **0,0065 Kč**; OpenAI GPT-5 nano **0,0011 Kč**
+- **Bezpečnostní pravidlo** (v promptu): jistota pod 0,85 nebo text „nedoručeno“ → `v přepravě` / `nevím`. Nikdy nevytvoří falešné doručení.
 
 ## Příkazy a přepínače
 
@@ -106,7 +106,7 @@ Když podíl neznámých šablon překročí 10 %, nastupuje LLM fallback (`src/
 | `npm run decide -- --json` | výstup rozhodnutí v JSON (pro piping do API/jq) |
 | `npm run measure -- --data dir` | přepíše `docs/mereni.md` |
 | `npm run measure -- --check` | skončí chybou, když by se zpráva změnila |
-| `npm run reconcile` | porovná rozhodnutí automatu s reklamacemi ze souboru |
+| `npm run reconcile` | stínový diff: `FILE` automatu vs. existující reklamace v `complaints.json` (ne označená lidská rozhodnutí) |
 | `npm run demo` | otevře ukázku rozhodování v prohlížeči |
 | `npm test` | testy bez sítě; zlatý test a loader čtou místní `data/` |
 

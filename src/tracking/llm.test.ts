@@ -20,13 +20,15 @@ describe('LLM Fallback & Cost Estimation', () => {
     expect(cleaned).toContain('Balíček byl doručen příjemci');
   });
 
-  it('calculates cost per evaluation across providers under 0.05 CZK', () => {
-    const textLength = 1200; // typical clean tracking page text length
-    const flashCost = estimateEvaluationCost(textLength, 'flash');
-    expect(flashCost.costCzk).toBeLessThan(0.02); // ~0.008 CZK per page
-    expect(flashCost.model).toBe(MODELS.flash.name);
-
-    const haikuCost = estimateEvaluationCost(textLength, 'haiku');
-    expect(haikuCost.costCzk).toBeLessThan(0.05); // ~0.028 CZK per page
+  it('keeps a typical page under 0.02 Kč on every listed tier', () => {
+    const textLength = 1200;
+    for (const key of Object.keys(MODELS) as Array<keyof typeof MODELS>) {
+      const cost = estimateEvaluationCost(textLength, key);
+      expect(cost.model).toBe(MODELS[key].name);
+      expect(cost.costCzk).toBeLessThan(0.02);
+    }
+    expect(estimateEvaluationCost(textLength, 'haiku').costCzk).toBeCloseTo(0.0018, 3);
+    expect(estimateEvaluationCost(textLength, 'flash').costCzk).toBeCloseTo(0.0065, 3);
+    expect(estimateEvaluationCost(textLength, 'nano').costCzk).toBeCloseTo(0.0011, 3);
   });
 });
